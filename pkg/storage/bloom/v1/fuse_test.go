@@ -192,10 +192,8 @@ func TestFuseMultiPage(t *testing.T) {
 
 	_, err = builder.BuildFrom(v2.NewSliceIter([]SeriesWithBlooms{
 		{
-			series,
-			v2.NewSliceIter([]*Bloom{
-				b1, b2,
-			}),
+			Series: series,
+			Blooms: v2.NewSliceIter([]*Bloom{b1, b2}),
 		},
 	}))
 	require.NoError(t, err)

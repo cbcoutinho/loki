@@ -55,7 +55,9 @@ type SeriesWithLiteralBlooms struct {
 
 func (s *SeriesWithLiteralBlooms) SeriesWithBlooms() SeriesWithBlooms {
 	return SeriesWithBlooms{
-		Series: s.Series,
+		Series: &SeriesWithMeta{
+			Series: *s.Series,
+		},
 		Blooms: iter.NewSliceIter[*Bloom](s.Blooms),
 	}
 }
