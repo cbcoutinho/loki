@@ -170,7 +170,7 @@ func TestFuseMultiPage(t *testing.T) {
 		Through:  10,
 		Checksum: 0,
 	}
-	series := &Series{
+	series := Series{
 		Fingerprint: fp,
 		Chunks:      []ChunkRef{chk},
 	}
@@ -192,7 +192,9 @@ func TestFuseMultiPage(t *testing.T) {
 
 	_, err = builder.BuildFrom(v2.NewSliceIter([]SeriesWithBlooms{
 		{
-			Series: series,
+			Series: &SeriesWithMeta{
+				Series: series,
+			},
 			Blooms: v2.NewSliceIter([]*Bloom{b1, b2}),
 		},
 	}))
@@ -277,8 +279,7 @@ func TestLazyBloomIter_Seek_ResetError(t *testing.T) {
 			},
 		}
 
-		var bloom Bloom
-		bloom.ScalableBloomFilter = *filter.NewScalableBloomFilter(1024, 0.01, 0.8)
+		bloom := NewBloom()
 
 		nLines := 10
 		// all even series will have a larger bloom (more than 1 filter)
@@ -298,8 +299,10 @@ func TestLazyBloomIter_Seek_ResetError(t *testing.T) {
 		}
 
 		data = append(data, SeriesWithBlooms{
-			Series: &series,
-			Blooms: v2.NewSliceIter([]*Bloom{&bloom}),
+			Series: &SeriesWithMeta{
+				Series: series,
+			},
+			Blooms: v2.NewSliceIter([]*Bloom{bloom}),
 		})
 	}
 
@@ -375,22 +378,19 @@ func TestFusedQuerierSkipsEmptyBlooms(t *testing.T) {
 	require.Nil(t, err)
 
 	data := SeriesWithBlooms{
-		Series: &Series{
-			Fingerprint: 0,
-			Chunks: []ChunkRef{
-				{
-					From:     0,
-					Through:  10,
-					Checksum: 0x1234,
+		Series: &SeriesWithMeta{
+			Series: Series{
+				Fingerprint: 0,
+				Chunks: []ChunkRef{
+					{
+						From:     0,
+						Through:  10,
+						Checksum: 0x1234,
+					},
 				},
 			},
 		},
-		Blooms: v2.NewSliceIter([]*Bloom{
-			// simulate empty bloom
-			{
-				*filter.NewScalableBloomFilter(1024, 0.01, 0.8),
-			},
-		}),
+		Blooms: v2.NewSliceIter([]*Bloom{NewBloom()}),
 	}
 
 	itr := v2.NewSliceIter[SeriesWithBlooms]([]SeriesWithBlooms{data})

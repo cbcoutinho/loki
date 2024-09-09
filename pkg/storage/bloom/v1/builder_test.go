@@ -264,7 +264,7 @@ func TestMergeBuilder(t *testing.T) {
 	storeItr := iter.NewMapIter[SeriesWithBlooms, *Series](
 		iter.NewSliceIter[SeriesWithBlooms](data),
 		func(swb SeriesWithBlooms) *Series {
-			return swb.Series
+			return &swb.Series.Series
 		},
 	)
 
@@ -519,11 +519,11 @@ func TestMergeBuilder_Roundtrip(t *testing.T) {
 			return a.Series.Fingerprint == b.Fingerprint
 		},
 		func(swb *SeriesWithBlooms) *Series {
-			return swb.Series
+			return &swb.Series.Series
 		},
 		func(a *SeriesWithBlooms, b *Series) *Series {
 			if len(a.Series.Chunks) > len(b.Chunks) {
-				return a.Series
+				return &a.Series.Series
 			}
 			return b
 		},
