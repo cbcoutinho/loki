@@ -188,6 +188,8 @@ func (bt *BloomTokenizer) addChunkToBloom(bloom *Bloom, ref ChunkRef, entryIter 
 		cachedInserts     int
 		collisionInserts  int
 		linesAdded        int
+
+		collision bool
 	)
 
 	// return values
@@ -214,18 +216,7 @@ outer:
 				}
 
 				// maxBloomSize is in bytes, but blooms operate at the bit level; adjust
-				var collision bool
 				collision, full = bloom.ScalableBloomFilter.TestAndAddWithMaxSize([]byte(tok), bt.maxBloomSize*eightBits)
-
-				if full {
-					// edge case: one line maxed out the bloom size -- retrying is futile
-					// (and will loop endlessly), so we'll just skip indexing it
-					if linesAdded == 0 {
-						_ = entryIter.Next()
-					}
-
-					break outer
-				}
 
 				if collision {
 					collisionInserts++
@@ -240,6 +231,18 @@ outer:
 					clear(bt.cache)
 				}
 			}
+		}
+
+		// Only break out of the loop if the bloom filter is full after indexing all structured metadata of an entry.
+		if full {
+			// edge case: one line maxed out the bloom size -- retrying is futile
+			// (and will loop endlessly), so we'll just skip indexing it
+			// TODO(chaudum): Skipping a line will yield false negatives when querying the bloom.
+			if linesAdded == 0 {
+				_ = entryIter.Next()
+			}
+
+			break outer
 		}
 
 		// Only advance the iterator once we're sure the bloom has accepted the line
