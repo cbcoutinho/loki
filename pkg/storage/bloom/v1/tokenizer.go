@@ -13,6 +13,7 @@ const (
 )
 
 type StructuredMetadataTokenizer struct {
+	// prefix to add to tokens, typically the encoded chunkref
 	prefix string
 	tokens []string
 }
